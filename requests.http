@@ -1,0 +1,304 @@
+### Fleet Maintenance & Logistics (FML) — demo requests
+### Start Postgres with `docker compose up -d`, then `dotnet run --project src/FML.Api`.
+@host = http://localhost:5080
+
+### Health
+GET {{host}}/health
+
+### Prometheus metrics scrape endpoint
+GET {{host}}/metrics
+
+##########################################################################
+### Auth (cross-cutting)
+##########################################################################
+
+### Log in as the seeded planner
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "username": "planner", "password": "planner-pw" }
+
+### List users
+GET {{host}}/api/auth/users
+
+### Get a single user
+GET {{host}}/api/auth/users/1
+
+### Create a technician
+POST {{host}}/api/auth/users
+Content-Type: application/json
+
+{
+  "username": "tech.olav",
+  "email": "olav@fml.local",
+  "password": "olav123",
+  "role": "Technician"
+}
+
+### Deactivate a user
+POST {{host}}/api/auth/users/5/deactivate
+
+##########################################################################
+### Asset Registry (journey 1)
+##########################################################################
+
+### All assets
+GET {{host}}/api/assets
+
+### Filter by status and type
+GET {{host}}/api/assets?status=InService&type=Engine
+
+### Single asset
+GET {{host}}/api/assets/1
+
+### Asset by code
+GET {{host}}/api/assets/by-code/VSL-001
+
+### Create an asset
+POST {{host}}/api/assets
+Content-Type: application/json
+
+{
+  "code": "PMP-302",
+  "name": "Ballast Pump B",
+  "assetType": "Pump",
+  "status": "InService",
+  "manufacturer": "Grundfos",
+  "model": "NK-200",
+  "homePort": "Rotterdam",
+  "commissionedOn": "2020-04-01T00:00:00Z",
+  "operatingHours": 3100,
+  "capacityTonnes": 0,
+  "ratedPowerKw": 160
+}
+
+### Update an asset
+PUT {{host}}/api/assets/1
+Content-Type: application/json
+
+{
+  "code": "VSL-001",
+  "name": "MV Northern Star",
+  "assetType": "Vessel",
+  "status": "InService",
+  "manufacturer": "Damen",
+  "model": "CSD-650",
+  "homePort": "Rotterdam",
+  "commissionedOn": "2016-03-01T00:00:00Z",
+  "operatingHours": 18900,
+  "capacityTonnes": 6500,
+  "ratedPowerKw": 4200
+}
+
+### Change status
+POST {{host}}/api/assets/1/status?status=Standby
+
+### Assets past their preventive-maintenance interval
+GET {{host}}/api/assets/due-for-maintenance
+
+### Delete an asset (fails while work orders reference it)
+DELETE {{host}}/api/assets/11
+
+##########################################################################
+### Telemetry (journey 1)
+##########################################################################
+
+### Recent readings
+GET {{host}}/api/telemetry/readings?take=20
+
+### Readings for one asset and metric
+GET {{host}}/api/telemetry/readings?assetId=4&metric=EngineTempC
+
+### Ingest a normal reading
+POST {{host}}/api/telemetry/readings
+Content-Type: application/json
+
+{ "assetId": 4, "metric": "EngineTempC", "value": 81.2, "unit": "C", "source": "sensor-hub" }
+
+### Ingest a breaching reading -> raises a condition-based work order
+POST {{host}}/api/telemetry/readings
+Content-Type: application/json
+
+{ "assetId": 5, "metric": "EngineTempC", "value": 101.4, "unit": "C", "source": "sensor-hub" }
+
+### Ingest a batch
+POST {{host}}/api/telemetry/readings/batch
+Content-Type: application/json
+
+[
+  { "assetId": 4, "metric": "VibrationMm", "value": 3.1, "unit": "mm/s" },
+  { "assetId": 4, "metric": "OilPressureBar", "value": 4.4, "unit": "bar" },
+  { "assetId": 6, "metric": "OilPressureBar", "value": 1.6, "unit": "bar" }
+]
+
+### Simulate a few readings for an asset
+POST {{host}}/api/telemetry/simulate/4?samples=3
+
+### Per-metric summary for an asset
+GET {{host}}/api/telemetry/assets/4/summary
+
+### Threshold breaches
+GET {{host}}/api/telemetry/breaches
+
+### Delete a reading
+DELETE {{host}}/api/telemetry/readings/1
+
+##########################################################################
+### Maintenance Scheduling (journey 1)
+##########################################################################
+
+### All work orders
+GET {{host}}/api/work-orders
+
+### Filter by status / asset
+GET {{host}}/api/work-orders?status=Open&assetId=4
+
+### Single work order
+GET {{host}}/api/work-orders/1
+
+### Create a work order with parts
+POST {{host}}/api/work-orders
+Content-Type: application/json
+
+{
+  "assetId": 4,
+  "title": "Replace fuel filters",
+  "description": "500h service",
+  "priority": "Normal",
+  "trigger": "Preventive",
+  "scheduledForUtc": null,
+  "assignedToUserId": null,
+  "parts": [{ "partId": 1, "quantityRequired": 4 }]
+}
+
+### Update a work order
+PUT {{host}}/api/work-orders/1
+Content-Type: application/json
+
+{
+  "assetId": 4,
+  "title": "Replace fuel filters (rescheduled)",
+  "description": "500h service",
+  "priority": "High",
+  "trigger": "Preventive",
+  "scheduledForUtc": "2026-03-01T08:00:00Z",
+  "assignedToUserId": 3,
+  "parts": null
+}
+
+### Add a part line
+POST {{host}}/api/work-orders/1/parts
+Content-Type: application/json
+
+{ "partId": 2, "quantityRequired": 2 }
+
+### Start (asset goes UnderMaintenance)
+POST {{host}}/api/work-orders/1/start
+
+### Complete (issues parts, reorders low stock, asset back InService)
+POST {{host}}/api/work-orders/1/complete?laborHours=6.5
+
+### Cancel
+POST {{host}}/api/work-orders/2/cancel
+
+### Preventive sweep across the fleet
+POST {{host}}/api/work-orders/preventive-sweep
+
+### Overdue work orders
+GET {{host}}/api/work-orders/overdue
+
+##########################################################################
+### Parts & Inventory (journey 2)
+##########################################################################
+
+### All parts
+GET {{host}}/api/inventory/parts
+
+### Filter by category
+GET {{host}}/api/inventory/parts?category=Filters
+
+### Single part
+GET {{host}}/api/inventory/parts/1
+
+### Create a part
+POST {{host}}/api/inventory/parts
+Content-Type: application/json
+
+{
+  "sku": "SEAL-900",
+  "name": "Shaft seal kit",
+  "category": "Seals",
+  "supplier": "Wartsila Parts",
+  "unitCost": 480.00,
+  "quantityOnHand": 6,
+  "reorderPoint": 3,
+  "reorderQuantity": 6,
+  "leadTimeDays": 21,
+  "warehouseCode": "WH-ROT"
+}
+
+### Update a part
+PUT {{host}}/api/inventory/parts/1
+Content-Type: application/json
+
+{
+  "sku": "FLT-1001",
+  "name": "Fuel filter element",
+  "category": "Filters",
+  "supplier": "Wartsila Parts",
+  "unitCost": 128.40,
+  "quantityOnHand": 40,
+  "reorderPoint": 12,
+  "reorderQuantity": 24,
+  "leadTimeDays": 10,
+  "warehouseCode": "WH-ROT"
+}
+
+### Delete a part
+DELETE {{host}}/api/inventory/parts/9
+
+### Reorder candidates (stock level + open work-order demand)
+GET {{host}}/api/inventory/reorder-candidates
+
+### Reorder a single part
+POST {{host}}/api/inventory/parts/1/reorder
+
+### Reorder a single part with an explicit quantity
+POST {{host}}/api/inventory/parts/1/reorder?quantity=50
+
+### Reorder everything below its reorder point
+POST {{host}}/api/inventory/reorder-run
+
+### Purchase orders
+GET {{host}}/api/inventory/purchase-orders
+
+### Only placed purchase orders
+GET {{host}}/api/inventory/purchase-orders?status=Placed
+
+### Receive a purchase order
+POST {{host}}/api/inventory/purchase-orders/1/receive
+
+### Stock movements
+GET {{host}}/api/inventory/movements?partId=1
+
+### Total stock value
+GET {{host}}/api/inventory/stock-value
+
+##########################################################################
+### Reporting (journey 2, cross-journey)
+##########################################################################
+
+### Fleet health dashboard
+GET {{host}}/api/reports/fleet-health
+
+### Maintenance cost report
+GET {{host}}/api/reports/maintenance-cost
+
+### Maintenance cost report for a window
+GET {{host}}/api/reports/maintenance-cost?fromUtc=2025-01-01T00:00:00Z&toUtc=2026-12-31T00:00:00Z
+
+### Inventory pressure report
+GET {{host}}/api/reports/inventory-pressure
+
+### Per-asset dossier
+GET {{host}}/api/reports/assets/4/dossier
