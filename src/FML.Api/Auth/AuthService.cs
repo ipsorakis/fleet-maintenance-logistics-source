@@ -1,16 +1,9 @@
-using System.Security.Cryptography;
-using System.Text;
 using FML.Api.Common;
 using FML.Api.Data;
+using FML.Common.Auth;
 using Microsoft.EntityFrameworkCore;
 
 namespace FML.Api.Auth;
-
-public record LoginRequest(string Username, string Password);
-
-public record LoginResponse(string Token, string Username, UserRole Role, DateTime ExpiresUtc);
-
-public record CreateUserRequest(string Username, string Email, string Password, UserRole Role);
 
 /// <summary>
 /// Cross-cutting user/authentication module. Both business journeys use it to
@@ -25,11 +18,8 @@ public class AuthService
         _db = db;
     }
 
-    public static string HashPassword(string password)
-    {
-        var bytes = Encoding.UTF8.GetBytes(FmlConfig.PasswordSalt + password);
-        return Convert.ToHexString(SHA256.HashData(bytes));
-    }
+    public static string HashPassword(string password) =>
+        PasswordHasher.Hash(FmlConfig.PasswordSalt, password);
 
     public Task<List<User>> GetUsersAsync() =>
         _db.Users.OrderBy(u => u.Username).ToListAsync();
@@ -63,8 +53,7 @@ public class AuthService
         await _db.SaveChangesAsync();
 
         var expires = DateTime.UtcNow.AddMinutes(FmlConfig.TokenLifetimeMinutes);
-        var token = Convert.ToHexString(SHA256.HashData(
-            Encoding.UTF8.GetBytes($"{user.Id}:{user.Username}:{expires:O}:{FmlConfig.PasswordSalt}")));
+        var token = AuthTokenFactory.Issue(FmlConfig.PasswordSalt, user.Id, user.Username, expires);
         return new LoginResponse(token, user.Username, user.Role, expires);
     }
 

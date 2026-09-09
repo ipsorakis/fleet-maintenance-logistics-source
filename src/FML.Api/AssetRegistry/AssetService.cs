@@ -1,5 +1,6 @@
 using FML.Api.Common;
 using FML.Api.Data;
+using FML.Common.Observability;
 using Microsoft.EntityFrameworkCore;
 
 namespace FML.Api.AssetRegistry;

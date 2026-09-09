@@ -3,6 +3,7 @@ using FML.Api.Auth;
 using FML.Api.Inventory;
 using FML.Api.MaintenanceScheduling;
 using FML.Api.Telemetry;
+using FML.Common.Auth;
 using Microsoft.EntityFrameworkCore;
 
 namespace FML.Api.Data;

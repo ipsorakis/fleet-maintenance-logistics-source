@@ -1,3 +1,5 @@
+using FML.Common.Configuration;
+
 namespace FML.Api.Common;
 
 /// <summary>
@@ -33,21 +35,21 @@ public static class FmlConfig
     {
         ConnectionString = configuration.GetConnectionString("Fml") ?? ConnectionString;
         FleetName = configuration["Fml:FleetName"] ?? FleetName;
-        AutoMigrateOnStartup = GetBool(configuration, "Fml:AutoMigrateOnStartup", AutoMigrateOnStartup);
-        SeedSampleData = GetBool(configuration, "Fml:SeedSampleData", SeedSampleData);
+        AutoMigrateOnStartup = configuration.GetBool("Fml:AutoMigrateOnStartup", AutoMigrateOnStartup);
+        SeedSampleData = configuration.GetBool("Fml:SeedSampleData", SeedSampleData);
 
-        EngineTempCriticalC = GetDouble(configuration, "Fml:Thresholds:EngineTempCriticalC", EngineTempCriticalC);
-        VibrationCriticalMm = GetDouble(configuration, "Fml:Thresholds:VibrationCriticalMm", VibrationCriticalMm);
-        OilPressureMinBar = GetDouble(configuration, "Fml:Thresholds:OilPressureMinBar", OilPressureMinBar);
-        PreventiveMaintenanceIntervalHours = GetInt(configuration, "Fml:Maintenance:PreventiveIntervalHours", PreventiveMaintenanceIntervalHours);
-        WorkOrderDueInDays = GetInt(configuration, "Fml:Maintenance:WorkOrderDueInDays", WorkOrderDueInDays);
+        EngineTempCriticalC = configuration.GetDouble("Fml:Thresholds:EngineTempCriticalC", EngineTempCriticalC);
+        VibrationCriticalMm = configuration.GetDouble("Fml:Thresholds:VibrationCriticalMm", VibrationCriticalMm);
+        OilPressureMinBar = configuration.GetDouble("Fml:Thresholds:OilPressureMinBar", OilPressureMinBar);
+        PreventiveMaintenanceIntervalHours = configuration.GetInt("Fml:Maintenance:PreventiveIntervalHours", PreventiveMaintenanceIntervalHours);
+        WorkOrderDueInDays = configuration.GetInt("Fml:Maintenance:WorkOrderDueInDays", WorkOrderDueInDays);
 
-        DefaultReorderMultiplier = GetInt(configuration, "Fml:Inventory:DefaultReorderMultiplier", DefaultReorderMultiplier);
-        PurchaseOrderLeadTimeDaysFallback = GetInt(configuration, "Fml:Inventory:LeadTimeDaysFallback", PurchaseOrderLeadTimeDaysFallback);
-        StockValueAlertThreshold = (decimal)GetDouble(configuration, "Fml:Inventory:StockValueAlertThreshold", (double)StockValueAlertThreshold);
+        DefaultReorderMultiplier = configuration.GetInt("Fml:Inventory:DefaultReorderMultiplier", DefaultReorderMultiplier);
+        PurchaseOrderLeadTimeDaysFallback = configuration.GetInt("Fml:Inventory:LeadTimeDaysFallback", PurchaseOrderLeadTimeDaysFallback);
+        StockValueAlertThreshold = configuration.GetDecimal("Fml:Inventory:StockValueAlertThreshold", StockValueAlertThreshold);
 
         PasswordSalt = configuration["Fml:Auth:PasswordSalt"] ?? PasswordSalt;
-        TokenLifetimeMinutes = GetInt(configuration, "Fml:Auth:TokenLifetimeMinutes", TokenLifetimeMinutes);
+        TokenLifetimeMinutes = configuration.GetInt("Fml:Auth:TokenLifetimeMinutes", TokenLifetimeMinutes);
     }
 
     /// <summary>Threshold lookup used by Telemetry ingestion and by Reporting alert counts.</summary>
@@ -58,13 +60,4 @@ public static class FmlConfig
         "OilPressureBar" => value <= OilPressureMinBar,
         _ => false,
     };
-
-    private static bool GetBool(IConfiguration c, string key, bool fallback) =>
-        bool.TryParse(c[key], out var parsed) ? parsed : fallback;
-
-    private static int GetInt(IConfiguration c, string key, int fallback) =>
-        int.TryParse(c[key], out var parsed) ? parsed : fallback;
-
-    private static double GetDouble(IConfiguration c, string key, double fallback) =>
-        double.TryParse(c[key], out var parsed) ? parsed : fallback;
 }

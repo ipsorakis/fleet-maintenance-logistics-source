@@ -1,4 +1,5 @@
 using FML.Api.Auth;
+using FML.Common.Auth;
 
 namespace FML.Tests;
 
