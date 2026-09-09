@@ -50,8 +50,28 @@ puts the asset back `InService`.
 
 | Module | Folder | Responsibility |
 | --- | --- | --- |
-| Auth / Users | `src/FML.Api/Auth` | Users and roles (Viewer, Technician, Planner, Administrator), salted-hash login returning an opaque demo token, technician lookup for work-order assignment. |
-| Shared plumbing | `src/FML.Api/Common`, `src/FML.Api/Data` | `FmlConfig` static configuration and threshold rules, `FmlTelemetry` activity source and counters, the shared `FmlDbContext`, `SeedData`. |
+| Auth / Users | `src/FML.Api/Auth` | `AuthService`: salted-hash login returning an opaque demo token, technician lookup for work-order assignment. The `User`/`UserRole` model and the login/user contracts come from `Fml.Common`. |
+| Shared plumbing | `src/FML.Api/Common`, `src/FML.Api/Data` | `FmlConfig` static configuration and threshold rules, the shared `FmlDbContext`, `SeedData`. The activity source, counters and configuration readers come from `Fml.Common`. |
+
+### Shared library
+
+The cross-cutting primitives are no longer in this repo: they live in
+[`ipsorakis/fleet-maintenance-logistics-common`](https://github.com/ipsorakis/fleet-maintenance-logistics-common)
+and are consumed as the `Fml.Common` NuGet package (`0.1.0`, semantic versioning, published
+to GitHub Packages). What moved:
+
+| From | To |
+| --- | --- |
+| `FML.Api.Auth.User` / `UserRole` | `FML.Common.Auth` |
+| `LoginRequest`, `LoginResponse`, `CreateUserRequest` | `FML.Common.Auth` |
+| password hashing and token issuing in `AuthService` | `FML.Common.Auth.PasswordHasher` / `AuthTokenFactory` (called by `AuthService` with the configured salt) |
+| `FML.Api.Common.FmlTelemetry` | `FML.Common.Observability.FmlTelemetry` |
+| `FmlConfig`'s private `IConfiguration` readers | `FML.Common.Configuration.ConfigurationReader` |
+
+`AuthService`, `FmlDbContext`, `FmlConfig`'s thresholds and every module service stayed here —
+they are service-specific. `nuget.config` adds the GitHub Packages feed; set
+`GITHUB_PACKAGES_USER` and `GITHUB_PACKAGES_TOKEN` (a token with `read:packages`) to restore
+locally.
 
 ## Entity relationships
 
@@ -146,6 +166,6 @@ what the monolith actually looks like today, and it is what a split would have t
   orders, parts, movements and purchase orders in one unit of work and calls
   `AuthService.HashPassword` for the user rows.
 - **Shared observability primitives.** Every module emits spans and counters through the
-  single `FmlTelemetry` activity source and meter.
+  single `FmlTelemetry` activity source and meter, now provided by the `Fml.Common` package.
 - **One deployment unit.** All modules share the same host, DI container, JSON settings
   and startup path in `Program.cs`, so they scale, deploy and fail together.

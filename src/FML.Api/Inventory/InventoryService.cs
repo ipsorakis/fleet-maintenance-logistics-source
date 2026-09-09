@@ -1,6 +1,7 @@
 using FML.Api.Common;
 using FML.Api.Data;
 using FML.Api.MaintenanceScheduling;
+using FML.Common.Observability;
 using Microsoft.EntityFrameworkCore;
 
 namespace FML.Api.Inventory;

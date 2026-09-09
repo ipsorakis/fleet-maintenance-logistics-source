@@ -4,6 +4,7 @@ using FML.Api.Common;
 using FML.Api.Data;
 using FML.Api.Inventory;
 using FML.Api.Telemetry;
+using FML.Common.Observability;
 using Microsoft.EntityFrameworkCore;
 
 namespace FML.Api.MaintenanceScheduling;

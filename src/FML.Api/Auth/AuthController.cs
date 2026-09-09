@@ -1,3 +1,4 @@
+using FML.Common.Auth;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FML.Api.Auth;

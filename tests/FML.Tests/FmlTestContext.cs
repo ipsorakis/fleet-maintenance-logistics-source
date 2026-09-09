@@ -5,6 +5,7 @@ using FML.Api.Inventory;
 using FML.Api.MaintenanceScheduling;
 using FML.Api.Reporting;
 using FML.Api.Telemetry;
+using FML.Common.Auth;
 using Microsoft.EntityFrameworkCore;
 
 namespace FML.Tests;

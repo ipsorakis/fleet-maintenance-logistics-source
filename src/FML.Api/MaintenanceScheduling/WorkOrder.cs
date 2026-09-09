@@ -1,6 +1,7 @@
 using FML.Api.AssetRegistry;
 using FML.Api.Auth;
 using FML.Api.Inventory;
+using FML.Common.Auth;
 
 namespace FML.Api.MaintenanceScheduling;
 

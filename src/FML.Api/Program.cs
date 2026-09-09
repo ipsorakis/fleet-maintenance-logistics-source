@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using FML.Api.AssetRegistry;
 using FML.Api.Auth;
 using FML.Api.Common;
@@ -7,10 +6,12 @@ using FML.Api.Inventory;
 using FML.Api.MaintenanceScheduling;
 using FML.Api.Reporting;
 using FML.Api.Telemetry;
+using FML.Common.Observability;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
