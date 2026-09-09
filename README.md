@@ -57,7 +57,7 @@ puts the asset back `InService`.
 
 The cross-cutting primitives are no longer in this repo: they live in
 [`ipsorakis/fleet-maintenance-logistics-common`](https://github.com/ipsorakis/fleet-maintenance-logistics-common)
-and are consumed as the `Fml.Common` NuGet package (`0.1.0`, semantic versioning, published
+and are consumed as the `Fml.Common` NuGet package (`0.1.1`, semantic versioning, published
 to GitHub Packages). What moved:
 
 | From | To |
